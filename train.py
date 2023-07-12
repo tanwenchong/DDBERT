@@ -6,14 +6,19 @@ import torch.utils.data as Data
 from transformers import AutoTokenizer, RobertaForSequenceClassification
 parser = argparse.ArgumentParser()
 parser.add_argument('-i','--train_file')
-parser.add_argument('-l','--train_label')
+parser.add_argument('-a','--train_label')
 parser.add_argument('-v','--valid_file')
+parser.add_argument('-b','--valid_label')
 parser.add_argument('-t','--test_file')
+parser.add_argument('-c','--test_label')
 args = parser.parse_args()
 train_file=args.train_file
 train_label=args.train_label
 valid_file=args.valid_file
+valid_label=args.valid_label
 test_file=args.test_file
+test_label=args.test_label
+model_name='DDBERT'
 
 def get_score(file):
     scores=dict()
@@ -36,6 +41,15 @@ def get_smile(file):
             smile,name=line.split(' ')
             smiles[name[:-3]]=smile
     return smiles
+
+def get_dataframe(smiles,scores,ratio):
+	df_m=pd.DataFrame.from_dict(smiles, orient='index',columns=['smiles'])
+	df_s=pd.DataFrame.from_dict(scores, orient='index',columns=['scores'])
+	df=pd.concat([df_m,df_s],axis=1,join='inner')
+	df=df.sort_values(by='scores')
+	df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
+	return df
+	
   
 class Input(Dataset):
     def __init__(self, i_data, i_tokenizer, i_max_length):
@@ -53,26 +67,6 @@ class Input(Dataset):
         inputs["attention_mask"] = inputs["attention_mask"].squeeze(0)
         inputs["labels"] = torch.tensor(self.data.iloc[idx]["labels"], dtype=torch.float).unsqueeze(0)
         return inputs
-      
-class MyData:
-    def __init__(self, i_data):
-        self.data = i_data
-
-    def get_split(self, train_ratio=0.5, valid_ratio=0.05, seed=None):
-        n = len(self.data)
-        indices = np.arange(n)
-        if seed is not None:
-            np.random.seed(seed)
-        np.random.shuffle(indices)
-        train_size = int(train_ratio * n)
-        valid_size = int(valid_ratio * n)
-        train_indices = indices[:train_size]
-        valid_indices = indices[train_size:train_size+valid_size]
-        test_indices = indices[train_size+valid_size:]
-        i_train_data = self.data.iloc[train_indices].reset_index(drop=True)
-        i_valid_data = self.data.iloc[valid_indices].reset_index(drop=True)
-        i_test_data = self.data.iloc[test_indices].reset_index(drop=True)
-        return i_train_data, i_valid_data, i_test_data
 
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
 model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=1)
@@ -82,22 +76,23 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 train_smiles=get_smile(train_file)
-train_smiles=get_score(train_label)
-df_m=pd.DataFrame.from_dict(train_smiles, orient='index',columns=['smiles'])
-df_s=pd.DataFrame.from_dict(train_smiles, orient='index',columns=['scores'])
-df=pd.concat([df_m,df_s],axis=1,join='inner')
-df=df.sort_values(by='scores')
-df['labels']=df['scores'].gt(df.iloc[int(len(df)*0.99)]['scores'])
-df=MyData(df)
+train_scores=get_score(train_label)
+train_data=get_dataframe(train_smiles,train_scores)
+valid_smiles=get_smile(valid_file)
+valid_scores=get_score(valid_label)
+valid_data=get_dataframe(valid_smiles,valid_scores)
+test_smiles=get_smile(test_file)
+test_scores=get_score(test_label)
+test_data=get_dataframe(test_smiles,test_scores)
 
-data = train_data[['smiles', 'labels']]
+train = train_data[['smiles', 'labels']]
 valid = valid_data[['smiles', 'labels']]
 test = test_data[['smiles', 'labels']]
-train_dataset = Input(data, tokenizer, 150)
-validation_dataset = Input(valid, tokenizer, 150)
-
-train_loader = Data.DataLoader(dataset=train_dataset,batch_size=50,shuffle=False,num_workers=0,)
-valid_loader = Data.DataLoader(dataset=validation_dataset,batch_size=50,shuffle=False,num_workers=0,)
+train_dataset = Input(train, tokenizer, 150)
+valid_dataset = Input(valid, tokenizer, 150)
+batch_size=100
+train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,)
+valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,)
 
 def train(model,optimizer,loader):
     total_loss=0
@@ -113,11 +108,22 @@ def train(model,optimizer,loader):
 
 	return total_loss
 
-for epoch in range(30):
-    train_loss =train(model,optimizer,train_loader)
-    print(epoch,train_loss)
-    valid_loss=train(model,optimizer,valid_loader)
-    print(valid_loss)
+valid_loss=1000
+
+for epoch in range(10):
+    train_loss =train(model,optimizer,train_loader)/ len(train_loader)
+    print('epoch={},train_loss={}'.format(epoch,train_loss))
+	if train(model,optimizer,valid_loader)/len(valid_loader)<valid_loss:
+		valid_loss=train(model,optimizer,valid_loader)/len(valid_loader)
+		torch.save(model.state_dict(),model_name)
+    	print('epoch={},valid_loss={}'.format(epoch,valid_loss))
+	else:
+		print('epoch={},valid_loss={}'.format(epoch,valid_loss))
+
+
+
+
+
 
 
 
