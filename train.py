@@ -98,16 +98,14 @@ def train(model,optimizer,loader):
     total_loss=0
     model.train()
     for batch in loader:
-		    outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
-		    loss=outputs.loss
-		    total_loss+=loss.item()
-		    loss.backward()
-		    optimizer.step()
-		    #scheduler.step()
-		    optimizer.zero_grad()
-
+		outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
+		loss=outputs.loss
+		total_loss+=loss.item()
+		loss.backward()
+		optimizer.step()
+		#scheduler.step()
+		optimizer.zero_grad()
 	return total_loss
-
 valid_loss=1000
 
 for epoch in range(10):
