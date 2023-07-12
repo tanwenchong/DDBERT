@@ -66,7 +66,7 @@ class Input(Dataset):
         inputs = self.tokenizer(smile, return_tensors="pt", padding='max_length', truncation=True, max_length=self.max_length)
         inputs["input_ids"] = inputs["input_ids"].squeeze(0)
         inputs["attention_mask"] = inputs["attention_mask"].squeeze(0)
-        inputs["labels"] = torch.tensor(self.data.iloc[idx]["labels"], dtype=torch.float).unsqueeze(0)
+        inputs["labels"] = torch.tensor(self.data.iloc[idx]["labels"], dtype=torch.long).unsqueeze(0)
         return inputs
 
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
