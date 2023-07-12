@@ -70,7 +70,7 @@ class Input(Dataset):
         return inputs
 
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
-model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=1)
+model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=2)
 learning_rate=5e-5
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate,weight_decay=.0004)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
