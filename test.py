@@ -18,11 +18,12 @@ args = parser.parse_args()
 test_file=args.test_file
 test_label=args.test_label
 model_dict=args.model
-
+ratio=0.99
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
 model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=2)
 model.load_state_dict(torch.load(model_dict))
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model.to(device)
 test_smiles=get_smile(test_file)
 test_scores=get_score(test_label)
 test_data=get_dataframe(test_smiles,test_scores,ratio)
