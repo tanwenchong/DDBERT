@@ -5,6 +5,7 @@ import argparse
 import torch.utils.data as Data
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, RobertaForSequenceClassification
+from utils import *
 parser = argparse.ArgumentParser()
 parser.add_argument('-t','--train_file')
 parser.add_argument('-a','--train_label')
@@ -15,39 +16,7 @@ train_file=args.train_file
 train_label=args.train_label
 valid_file=args.valid_file
 valid_label=args.valid_label
-model_name='DDBERT'
-
-def get_score(file):
-    scores=dict()
-    with open(file,'r') as f:
-        mark=False
-        for line in f:
-            if mark==False:
-                mark=True
-                continue
-            else:
-                score,name=line.split(',')
-                scores[name[:-3]]=abs(float(score))
-    return scores
-
-def get_smile(file):
-    smiles=dict()
-    with open(file,'r') as f:
-        mark=False
-        for line in f:
-            smile,name=line.split(' ')
-            smiles[name[:-3]]=smile
-    return smiles
-
-def get_dataframe(smiles,scores,ratio):
-	df_m=pd.DataFrame.from_dict(smiles, orient='index',columns=['smiles'])
-	df_s=pd.DataFrame.from_dict(scores, orient='index',columns=['scores'])
-	df=pd.concat([df_m,df_s],axis=1,join='inner')
-	df=df.sort_values(by='scores')
-	df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
-	return df
-	
-  
+model_name='DDBERT'  
 class Input(Dataset):
     def __init__(self, i_data, i_tokenizer, i_max_length):
         self.data = i_data
