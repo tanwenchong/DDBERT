@@ -6,12 +6,10 @@ import torch.utils.data as Data
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, RobertaForSequenceClassification
 parser = argparse.ArgumentParser()
-parser.add_argument('-i','--train_file')
+parser.add_argument('-t','--train_file')
 parser.add_argument('-a','--train_label')
 parser.add_argument('-v','--valid_file')
 parser.add_argument('-b','--valid_label')
-parser.add_argument('-t','--test_file')
-parser.add_argument('-c','--test_label')
 args = parser.parse_args()
 train_file=args.train_file
 train_label=args.train_label
@@ -69,32 +67,39 @@ class Input(Dataset):
         inputs["labels"] = torch.tensor(self.data.iloc[idx]["labels"], dtype=torch.long).unsqueeze(0)
         return inputs
 
+ratio=0.99
+batch_size=100
+learning_rate=5e-5
+
+
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
 model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=2)
-learning_rate=5e-5
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate,weight_decay=.0004)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-ratio=0.99
+def get_sampler(ratio,num_samples):
+	weight=torch.FloatTensor([1/ratio,1/(1-ratio)],number,replacement=True)
+	sampler = torch.utils.data.sampler.WeightedRandomSampler(weight, num_samples, replacement=True)
+	return sampler
+
+
 train_smiles=get_smile(train_file)
 train_scores=get_score(train_label)
 train_data=get_dataframe(train_smiles,train_scores,ratio)
 valid_smiles=get_smile(valid_file)
 valid_scores=get_score(valid_label)
 valid_data=get_dataframe(valid_smiles,valid_scores,ratio)
-test_smiles=get_smile(test_file)
-test_scores=get_score(test_label)
-test_data=get_dataframe(test_smiles,test_scores,ratio)
 
 train = train_data[['smiles', 'labels']]
 valid = valid_data[['smiles', 'labels']]
 test = test_data[['smiles', 'labels']]
+
 train_dataset = Input(train, tokenizer, 150)
 valid_dataset = Input(valid, tokenizer, 150)
-batch_size=100
-train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,)
-valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,)
+
+train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler = get_sampler(ratio,len(train_dataset)))
+valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(ratio,len(valid_dataset)))
 
 def train(model,optimizer,loader):
     total_loss=0
