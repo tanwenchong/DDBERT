@@ -7,6 +7,7 @@ import argparse
 import torch.utils.data as Data
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, RobertaForSequenceClassification
+from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t','--test_file')
