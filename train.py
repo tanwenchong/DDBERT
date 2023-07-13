@@ -15,8 +15,6 @@ train_file=args.train_file
 train_label=args.train_label
 valid_file=args.valid_file
 valid_label=args.valid_label
-test_file=args.test_file
-test_label=args.test_label
 model_name='DDBERT'
 
 def get_score(file):
@@ -79,7 +77,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 def get_sampler(ratio,num_samples):
-	weight=torch.FloatTensor([1/ratio,1/(1-ratio)],number,replacement=True)
+	weight=torch.FloatTensor([1/ratio,1/(1-ratio)])
 	sampler = torch.utils.data.sampler.WeightedRandomSampler(weight, num_samples, replacement=True)
 	return sampler
 
@@ -93,7 +91,7 @@ valid_data=get_dataframe(valid_smiles,valid_scores,ratio)
 
 train = train_data[['smiles', 'labels']]
 valid = valid_data[['smiles', 'labels']]
-test = test_data[['smiles', 'labels']]
+
 
 train_dataset = Input(train, tokenizer, 150)
 valid_dataset = Input(valid, tokenizer, 150)
