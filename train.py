@@ -75,7 +75,7 @@ def train(model,optimizer,loader):
 		optimizer.zero_grad()
 	return total_loss
 	
-def valid(model,loder):
+def valid(model,loader):
 	total_loss=0
 	model.eval()
 	with torch.no_grad():
