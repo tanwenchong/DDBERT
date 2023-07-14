@@ -45,12 +45,6 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate,weight_decay=
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-def get_sampler(ratio,num_samples):
-	weight=torch.FloatTensor([1/ratio,1/(1-ratio)])
-	sampler = torch.utils.data.sampler.WeightedRandomSampler(weight, num_samples, replacement=True)
-	return sampler
-
-
 train_smiles=get_smile(train_file)
 train_scores=get_score(train_label)
 train_data=get_dataframe(train_smiles,train_scores,ratio)
@@ -64,9 +58,10 @@ valid = valid_data[['smiles', 'labels']]
 
 train_dataset = Input(train, tokenizer, 150)
 valid_dataset = Input(valid, tokenizer, 150)
-
-train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler = get_sampler(ratio,len(train_dataset)))
-valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(ratio,len(valid_dataset)))
+weight=np.array(test_data[['weight']]).tolist()
+weight=np.squeeze(weight)
+train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler = get_sampler(weight,ratio,len(train_dataset)))
+valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(weight,ratio,len(valid_dataset)))
 
 def train(model,optimizer,loader):
     total_loss=0
