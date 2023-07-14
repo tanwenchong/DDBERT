@@ -29,6 +29,16 @@ def get_dataframe(smiles,scores,ratio):
     df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
     df['weight']=df['labels'].map(get_weight)
     return df
-def get_sampler(weight,ratio,num_samples):
+	
+def get_sampler(df,ratio,num_samples):
+	weight=np.array(df[['weight']]).tolist()
+	weight=np.squeeze(weight)
 	sampler = torch.utils.data.sampler.WeightedRandomSampler(weight, num_samples, replacement=True)
 	return sampler
+
+
+
+
+
+
+
