@@ -20,7 +20,13 @@ def get_smile(file):
             smile,name=line.split(' ')
             smiles[name[:-3]]=smile
     return smiles
-
+	
+def get_weight(df,ratio=0.99):
+    if int(df)==False:
+        return int(1/ratio)
+    else:
+        return int(1/(1-ratio))
+	    
 def get_dataframe(smiles,scores,ratio):
     df_m=pd.DataFrame.from_dict(smiles, orient='index',columns=['smiles'])
     df_s=pd.DataFrame.from_dict(scores, orient='index',columns=['scores'])
@@ -29,7 +35,7 @@ def get_dataframe(smiles,scores,ratio):
     df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
     df['weight']=df['labels'].map(get_weight)
     return df
-	
+	    
 def get_sampler(df,ratio,num_samples):
 	weight=np.array(df[['weight']]).tolist()
 	weight=np.squeeze(weight)
