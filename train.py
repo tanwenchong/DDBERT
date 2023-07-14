@@ -66,13 +66,13 @@ def train(model,optimizer,loader):
     total_loss=0
     model.train()
     for batch in loader:
-		    outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
-		    loss=outputs.loss
-		    total_loss+=loss.item()
-		    loss.backward()
-		    optimizer.step()
-		    #scheduler.step()
-		    optimizer.zero_grad()
+		outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
+		loss=outputs.loss
+		total_loss+=loss.item()
+		loss.backward()
+		optimizer.step()
+		#scheduler.step()
+		optimizer.zero_grad()
     return total_loss
 
 valid_loss=1000
@@ -80,12 +80,14 @@ valid_loss=1000
 for epoch in range(10):
     train_loss =train(model,optimizer,train_loader)/ len(train_loader)
     print('epoch={},train_loss={}'.format(epoch,train_loss))
-    if train(model,optimizer,valid_loader)/len(valid_loader)<valid_loss:
-        valid_loss=train(model,optimizer,valid_loader)/len(valid_loader)
+	with torch.no_grad():
+		vloss=train(model,optimizer,valid_loader)/len(valid_loader)
+    if vloss<valid_loss:
+        valid_loss=vloss
         torch.save(model.state_dict(),model_name)
-        print('epoch={},valid_loss={}'.format(epoch,valid_loss))
+        print('epoch={},valid_loss={}'.format(epoch,vloss))
     else:
-        print('epoch={},valid_loss={}'.format(epoch,valid_loss))
+        print('epoch={},valid_loss={}'.format(epoch,vloss))
 
 
 
