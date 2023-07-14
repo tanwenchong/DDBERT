@@ -63,8 +63,8 @@ train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuff
 valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(valid_data,ratio,len(valid_dataset)))
 
 def train(model,optimizer,loader):
-    total_loss=0
-    model.train()
+	total_loss=0
+	model.train()
     for batch in loader:
 		outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
 		loss=outputs.loss
@@ -73,7 +73,7 @@ def train(model,optimizer,loader):
 		optimizer.step()
 		#scheduler.step()
 		optimizer.zero_grad()
-    return total_loss
+	return total_loss
 	
 def valid(model,loder):
 	total_loss=0
