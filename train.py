@@ -65,7 +65,7 @@ valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuff
 def train(model,optimizer,loader):
 	total_loss=0
 	model.train()
-    for batch in loader:
+	for batch in loader:
 		outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
 		loss=outputs.loss
 		total_loss+=loss.item()
@@ -79,7 +79,7 @@ def valid(model,loder):
 	total_loss=0
 	model.eval()
 	with torch.no_grad():
-    		for batch in loader:
+		for batch in loader:
 			outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
 			loss=outputs.loss
 			total_loss+=loss.item()
