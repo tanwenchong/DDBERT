@@ -74,14 +74,23 @@ def train(model,optimizer,loader):
 		#scheduler.step()
 		optimizer.zero_grad()
     return total_loss
-
+	
+def valid(model,loder):
+	total_loss=0
+	model.eval()
+	with torch.no_grad():
+    	for batch in loader:
+			outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
+			loss=outputs.loss
+			total_loss+=loss.item()
+	return total_loss
+	
 valid_loss=1000
 
 for epoch in range(10):
 	train_loss =train(model,optimizer,train_loader)/ len(train_loader)
 	print('epoch={},train_loss={}'.format(epoch,train_loss))
-	with torch.no_grad():
-		vloss=train(model,optimizer,valid_loader)/len(valid_loader)
+	vloss=valid(model,valid_loader)/len(valid_loader)
 	if vloss<valid_loss:
 		valid_loss=vloss
 		torch.save(model.state_dict(),model_name)
