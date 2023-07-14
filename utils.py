@@ -22,9 +22,13 @@ def get_smile(file):
     return smiles
 
 def get_dataframe(smiles,scores,ratio):
-	df_m=pd.DataFrame.from_dict(smiles, orient='index',columns=['smiles'])
-	df_s=pd.DataFrame.from_dict(scores, orient='index',columns=['scores'])
-	df=pd.concat([df_m,df_s],axis=1,join='inner')
-	df=df.sort_values(by='scores')
-	df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
-	return df
+    df_m=pd.DataFrame.from_dict(smiles, orient='index',columns=['smiles'])
+    df_s=pd.DataFrame.from_dict(scores, orient='index',columns=['scores'])
+    df=pd.concat([df_m,df_s],axis=1,join='inner')
+    df=df.sort_values(by='scores')
+    df['labels']=df['scores'].gt(df.iloc[int(len(df)*ratio)]['scores'])	
+    df['weight']=df['labels'].map(get_weight)
+    return df
+def get_sampler(weight,ratio,num_samples):
+	sampler = torch.utils.data.sampler.WeightedRandomSampler(weight, num_samples, replacement=True)
+	return sampler
