@@ -58,10 +58,9 @@ valid = valid_data[['smiles', 'labels']]
 
 train_dataset = Input(train, tokenizer, 150)
 valid_dataset = Input(valid, tokenizer, 150)
-weight=np.array(test_data[['weight']]).tolist()
-weight=np.squeeze(weight)
-train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler = get_sampler(weight,ratio,len(train_dataset)))
-valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(weight,ratio,len(valid_dataset)))
+
+train_loader = Data.DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler = get_sampler(train_data,ratio,len(train_dataset)))
+valid_loader = Data.DataLoader(dataset=valid_dataset,batch_size=batch_size,shuffle=False,num_workers=0,sampler =get_sampler(valid_data,ratio,len(valid_dataset)))
 
 def train(model,optimizer,loader):
     total_loss=0
