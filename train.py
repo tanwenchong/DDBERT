@@ -79,7 +79,7 @@ def valid(model,loder):
 	total_loss=0
 	model.eval()
 	with torch.no_grad():
-    	for batch in loader:
+    		for batch in loader:
 			outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
 			loss=outputs.loss
 			total_loss+=loss.item()
