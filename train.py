@@ -81,7 +81,7 @@ for epoch in range(10):
     train_loss =train(model,optimizer,train_loader)/ len(train_loader)
     print('epoch={},train_loss={}'.format(epoch,train_loss))
 	with torch.no_grad():
-		vloss=train(model,optimizer,valid_loader)/len(valid_loader)
+	vloss=train(model,optimizer,valid_loader)/len(valid_loader)
     if vloss<valid_loss:
         valid_loss=vloss
         torch.save(model.state_dict(),model_name)
