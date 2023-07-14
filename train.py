@@ -78,16 +78,16 @@ def train(model,optimizer,loader):
 valid_loss=1000
 
 for epoch in range(10):
-    train_loss =train(model,optimizer,train_loader)/ len(train_loader)
-    print('epoch={},train_loss={}'.format(epoch,train_loss))
+	train_loss =train(model,optimizer,train_loader)/ len(train_loader)
+	print('epoch={},train_loss={}'.format(epoch,train_loss))
 	with torch.no_grad():
 	vloss=train(model,optimizer,valid_loader)/len(valid_loader)
-    if vloss<valid_loss:
-        valid_loss=vloss
-        torch.save(model.state_dict(),model_name)
-        print('epoch={},valid_loss={}'.format(epoch,vloss))
-    else:
-        print('epoch={},valid_loss={}'.format(epoch,vloss))
+	if vloss<valid_loss:
+		valid_loss=vloss
+		torch.save(model.state_dict(),model_name)
+		print('epoch={},valid_loss={}'.format(epoch,vloss))
+	else:
+		print('epoch={},valid_loss={}'.format(epoch,vloss))
 
 
 
