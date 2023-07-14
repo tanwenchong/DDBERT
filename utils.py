@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 def get_score(file):
     scores=dict()
     with open(file,'r') as f:
