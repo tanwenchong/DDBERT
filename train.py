@@ -6,6 +6,9 @@ import torch.utils.data as Data
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, RobertaForSequenceClassification
 from utils import *
+import ray
+from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 parser = argparse.ArgumentParser()
 parser.add_argument('-t','--train_file')
 parser.add_argument('-a','--train_label')
@@ -75,30 +78,50 @@ def train(model,optimizer,loader):
 		optimizer.zero_grad()
 	return total_loss
 	
-def valid(model,loader):
-	total_loss=0
-	model.eval()
-	with torch.no_grad():
-		for batch in loader:
-			outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
-			loss=outputs.loss
-			total_loss+=loss.item()
-	return total_loss
-	
-valid_loss=1000
+def loss_valid(model,loader):
+    total_loss=0
+    model.eval()
+    with torch.no_grad():
+        for batch in loader:
+            outputs=model(batch['input_ids'].to(device),labels=batch['labels'].to(device),attention_mask=batch['attention_mask'].to(device))
+            loss=outputs.loss
+            total_loss+=loss.item()
+    return total_loss
 
-for epoch in range(10):
-	train_loss =train(model,optimizer,train_loader)/ len(train_loader)
-	print('epoch={},train_loss={}'.format(epoch,train_loss))
-	vloss=valid(model,valid_loader)/len(valid_loader)
-	if vloss<valid_loss:
-		valid_loss=vloss
-		torch.save(model.state_dict(),model_name)
-		print('epoch={},valid_loss={}'.format(epoch,vloss))
-	else:
-		print('epoch={},valid_loss={}'.format(epoch,vloss))
+def acc_valid(model,loader):
+    predictions = []
+    labels=[]
+    model.eval()
+    with torch.no_grad():  
+        for batch in loader: 
+            outputs=model(batch['input_ids'].to(device),attention_mask=batch['attention_mask'].to(device))
+            predict = outputs.logits.argmax(axis=1)
+            predict=predict.cpu().numpy().tolist()
+            predictions+=predict
+            labels+=batch['labels'].squeeze(1).numpy().tolist()
+    return metrics.accuracy_score(labels,predictions)
+#valid_loss=1000
+best_acc=0
+def run_training(mode):
+	for epoch in range(10):
+		train_loss =train(model,optimizer,train_loader)/ len(train_loader)
+		print('epoch={},train_loss={}'.format(epoch,train_loss))
+		if mode=='loss':
+			vloss=valid(model,valid_loader)/len(valid_loader)
+			if vloss<valid_loss:
+				valid_loss=vloss
+				torch.save(model.state_dict(),model_name)
+  				print('epoch={},valid_loss={}'.format(epoch,vloss))
+		if mode=='acc':
+			acc=acc_valid(model,valid_loader)
+			if acc>best_acc:
+				best_acc=acc
+				torch.save(model.state_dict(),model_name)
+				print('epoch={},acc={}'.format(epoch,acc))
 
 
+mode='acc'
+run_training(mode)
 
 
 
