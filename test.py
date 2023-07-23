@@ -19,23 +19,6 @@ test_file=args.test_file
 test_label=args.test_label
 model_dict=args.model
 
-class Input(Dataset):
-    def __init__(self, i_data, i_tokenizer, i_max_length):
-        self.data = i_data
-        self.tokenizer = i_tokenizer
-        self.max_length = i_max_length
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        smile = self.data.iloc[idx]['smiles']
-        inputs = self.tokenizer(smile, return_tensors="pt", padding='max_length', truncation=True, max_length=self.max_length)
-        inputs["input_ids"] = inputs["input_ids"].squeeze(0)
-        inputs["attention_mask"] = inputs["attention_mask"].squeeze(0)
-        inputs["labels"] = torch.tensor(self.data.iloc[idx]["labels"], dtype=torch.long).unsqueeze(0)
-        return inputs
-
 tokenizer = AutoTokenizer.from_pretrained("DeepChem/ChemBERTa-10M-MLM")
 model = RobertaForSequenceClassification.from_pretrained("DeepChem/ChemBERTa-10M-MLM",num_labels=2)
 model.load_state_dict(torch.load(model_dict))
